@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: canvasly-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: canvasly
+      POSTGRES_PASSWORD: canvasly
+      POSTGRES_DB: canvasly
+    ports:
+      - "5432:5432"
+    volumes:
+      - canvasly-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U canvasly"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  canvasly-pgdata:

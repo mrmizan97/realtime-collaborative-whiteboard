@@ -1,0 +1,29 @@
+{
+  "name": "canvasly",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @canvasly/web dev",
+    "dev:realtime": "pnpm --filter @canvasly/realtime dev",
+    "dev": "pnpm -r --parallel --filter \"@canvasly/*\" dev",
+    "build": "pnpm -r --filter \"@canvasly/*\" build",
+    "lint": "pnpm -r --filter \"@canvasly/*\" lint",
+    "typecheck": "pnpm -r --filter \"@canvasly/*\" typecheck",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @canvasly/shared db:generate",
+    "db:migrate": "pnpm --filter @canvasly/shared db:migrate",
+    "db:studio": "pnpm --filter @canvasly/shared db:studio",
+    "db:seed": "pnpm --filter @canvasly/shared db:seed",
+    "db:reset": "pnpm --filter @canvasly/shared db:reset",
+    "setup": "pnpm install && pnpm db:up && sleep 3 && pnpm db:generate && pnpm db:migrate && pnpm db:seed"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "prettier": "^3.3.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
