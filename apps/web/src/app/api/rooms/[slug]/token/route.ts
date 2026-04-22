@@ -11,10 +11,15 @@ export async function GET(_: Request, { params }: { params: Promise<{ slug: stri
   const access = await resolveRoomAccess(slug, session.user.id);
   if (!access) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  const { token, expiresAt } = await signRealtimeToken(env.JWT_SECRET(), {
-    sub: session.user.id,
-    room: access.room.id,
-    role: access.role,
-  });
+  const TTL_SECONDS = 4 * 60 * 60;
+  const { token, expiresAt } = await signRealtimeToken(
+    env.JWT_SECRET(),
+    {
+      sub: session.user.id,
+      room: access.room.id,
+      role: access.role,
+    },
+    TTL_SECONDS,
+  );
   return NextResponse.json({ token, expiresAt, roomId: access.room.id });
 }

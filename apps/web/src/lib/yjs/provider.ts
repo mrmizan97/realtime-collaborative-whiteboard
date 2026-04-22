@@ -11,7 +11,7 @@ export type ProviderStack = {
   destroy: () => void;
 };
 
-async function fetchToken(slug: string): Promise<{ token: string; roomId: string }> {
+async function fetchToken(slug: string): Promise<{ token: string; roomId: string; expiresAt: number }> {
   const res = await fetch(`/api/rooms/${slug}/token`);
   if (!res.ok) throw new Error(`token fetch failed: ${res.status}`);
   return res.json();
@@ -19,13 +19,13 @@ async function fetchToken(slug: string): Promise<{ token: string; roomId: string
 
 export async function mountProviders(slug: string): Promise<ProviderStack> {
   const doc = new Y.Doc();
-  const { token, roomId } = await fetchToken(slug);
+  const initial = await fetchToken(slug);
 
-  const local = new IndexeddbPersistence(`canvasly:${roomId}`, doc);
+  const local = new IndexeddbPersistence(`canvasly:${initial.roomId}`, doc);
   await local.whenSynced;
 
-  const ws = new WebsocketProvider(env.REALTIME_URL, roomId, doc, {
-    params: { token, room: roomId },
+  const ws = new WebsocketProvider(env.REALTIME_URL(), initial.roomId, doc, {
+    params: { token: initial.token, room: initial.roomId },
     connect: true,
   });
 

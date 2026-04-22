@@ -4,7 +4,7 @@ import { mountProviders, type ProviderStack } from "@/lib/yjs/provider";
 import { startRenderer, type RendererHandle } from "@/lib/canvas/renderer";
 import { useViewportStore } from "@/stores/viewport";
 import { useToolStore } from "@/stores/tool";
-import { useConnectionStore } from "@/stores/connection";
+import { bindConnectionStatus } from "@/lib/offline/status";
 import { useAwarenessStore, type PeerEntry } from "@/stores/awareness";
 import { useSelectionStore } from "@/stores/selection";
 import { makeUndoManager, LOCAL_ORIGIN } from "@/lib/yjs/undo";
@@ -90,12 +90,7 @@ export function useCanvas(slug: string) {
       const ro = new ResizeObserver(() => renderer.markDirty());
       ro.observe(canvas);
 
-      providers.ws.on("status", ({ status }: { status: string }) => {
-        const s = useConnectionStore.getState();
-        if (status === "connected") s.setStatus("online");
-        else if (status === "connecting") s.setStatus("reconnecting");
-        else s.setStatus("offline");
-      });
+      const unbindStatus = bindConnectionStatus(providers.ws);
 
       const syncAwareness = () => {
         const states = providers.ws.awareness.getStates();
@@ -205,6 +200,7 @@ export function useCanvas(slug: string) {
         window.removeEventListener("keydown", handleKeyDown);
         document.removeEventListener("visibilitychange", onVisibility);
         providers.ws.awareness.off("change", syncAwareness);
+        unbindStatus();
         unsubVp();
         unsubSel();
         renderer.stop();

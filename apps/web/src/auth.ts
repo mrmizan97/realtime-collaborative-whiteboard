@@ -18,16 +18,6 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
-if (process.env.EMAIL_SERVER && process.env.EMAIL_FROM) {
-  const { default: Email } = await import("next-auth/providers/nodemailer");
-  providers.push(
-    Email({
-      server: process.env.EMAIL_SERVER,
-      from: process.env.EMAIL_FROM,
-    }),
-  );
-}
-
 if (process.env.DEV_CREDENTIALS_LOGIN === "true") {
   providers.push(
     Credentials({
