@@ -5,9 +5,17 @@ import { Canvas } from "@/components/canvas/Canvas";
 import { Toolbar } from "@/components/toolbar/Toolbar";
 import { ConnectionBanner } from "@/components/collab/ConnectionBanner";
 import { PresenceAvatars } from "@/components/collab/PresenceAvatars";
+import { CommentsPanel } from "@/components/collab/CommentsPanel";
+import { CallBar } from "@/components/collab/CallBar";
+import { CallTiles } from "@/components/collab/CallTiles";
 import { ShareDialog } from "./ShareDialog";
 import { SettingsDrawer } from "./SettingsDrawer";
 import { ExportDialog } from "@/components/panels/ExportDialog";
+import { ShortcutsHelp } from "@/components/panels/ShortcutsHelp";
+import { HistoryPanel } from "@/components/panels/HistoryPanel";
+import { LayersPanel } from "@/components/panels/LayersPanel";
+import { CommandPalette } from "@/components/panels/CommandPalette";
+import { useDocStore } from "@/stores/doc";
 import { touchRecent } from "@/lib/rooms/recent";
 import type { Visibility } from "@canvasly/shared";
 
@@ -22,7 +30,9 @@ export function CanvasPage({
   role: "owner" | "editor" | "viewer";
   visibility: Visibility;
 }) {
+  const doc = useDocStore((s) => s.doc);
   const docRef = useRef<Y.Doc | null>(null);
+  docRef.current = doc;
 
   useEffect(() => {
     touchRecent({ id: slug, slug, name: roomName });
@@ -38,6 +48,11 @@ export function CanvasPage({
         </div>
         <div className="pointer-events-auto flex items-center gap-2">
           <PresenceAvatars />
+          <CallBar />
+          <CommentsPanel docRef={docRef} />
+          <LayersPanel docRef={docRef} />
+          <HistoryPanel slug={slug} />
+          <ShortcutsHelp />
           <ExportDialog slug={slug} docRef={docRef} />
           <ShareDialog slug={slug} initialVisibility={visibility} />
           <SettingsDrawer slug={slug} initialName={roomName} isOwner={role === "owner"} />
@@ -46,6 +61,8 @@ export function CanvasPage({
 
       <Toolbar disabled={role === "viewer"} />
       <ConnectionBanner />
+      <CallTiles />
+      <CommandPalette />
     </div>
   );
 }
