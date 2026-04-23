@@ -3,6 +3,8 @@ export type AwarenessState = {
   cursor: { x: number; y: number } | null;
   selection: string[];
   viewing: boolean;
+  viewport?: { x: number; y: number; zoom: number };
+  reaction?: { emoji: string; x: number; y: number; at: number };
 };
 
 export type RealtimeJwtClaims = {

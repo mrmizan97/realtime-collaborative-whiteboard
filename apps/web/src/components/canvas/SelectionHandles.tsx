@@ -71,24 +71,62 @@ export function SelectionHandles({ docRef }: { docRef: React.MutableRefObject<Y.
     window.addEventListener("pointerup", up);
   }
 
+  function onRotate(e: React.PointerEvent) {
+    e.stopPropagation();
+    (e.target as Element).setPointerCapture(e.pointerId);
+    const doc = docRef.current;
+    if (!doc || shapes.length !== 1) return;
+    const s = shapes[0]!;
+    const cxWorld = s.x + s.width / 2;
+    const cyWorld = s.y + s.height / 2;
+    const cScreen = worldToScreen(viewport, cxWorld, cyWorld);
+    const startAngle = Math.atan2(e.clientY - cScreen.y, e.clientX - cScreen.x);
+    const origRotation = s.rotation ?? 0;
+
+    const move = (ev: PointerEvent) => {
+      const a = Math.atan2(ev.clientY - cScreen.y, ev.clientX - cScreen.x);
+      let next = origRotation + (a - startAngle);
+      if (ev.shiftKey) {
+        const step = Math.PI / 12; // 15°
+        next = Math.round(next / step) * step;
+      }
+      updateShape(doc, s.id, { rotation: next }, LOCAL_ORIGIN);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
+
   return (
     <div
       className="absolute pointer-events-none border-2 border-blue-500"
       style={{ left, top, width, height }}
     >
-      {shapes.length === 1 &&
-        handles.map((h) => (
+      {shapes.length === 1 && (
+        <>
+          {handles.map((h) => (
+            <div
+              key={h.id}
+              onPointerDown={(e) => onResize(h.id, e)}
+              className="absolute w-2.5 h-2.5 bg-white border-2 border-blue-500 pointer-events-auto"
+              style={{ left: h.x * width - 5, top: h.y * height - 5, cursor: h.cursor }}
+            />
+          ))}
           <div
-            key={h.id}
-            onPointerDown={(e) => onResize(h.id, e)}
-            className="absolute w-2.5 h-2.5 bg-white border-2 border-blue-500 pointer-events-auto"
-            style={{
-              left: h.x * width - 5,
-              top: h.y * height - 5,
-              cursor: h.cursor,
-            }}
+            onPointerDown={onRotate}
+            className="absolute w-3 h-3 rounded-full bg-white border-2 border-blue-500 pointer-events-auto"
+            style={{ left: width / 2 - 6, top: -28, cursor: "grab" }}
+            title="Rotate (shift = 15° steps)"
           />
-        ))}
+          <div
+            className="absolute pointer-events-none"
+            style={{ left: width / 2, top: -20, width: 1, height: 14, background: "#3B82F6" }}
+          />
+        </>
+      )}
     </div>
   );
 }
