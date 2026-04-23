@@ -2,7 +2,7 @@
 import type * as Y from "yjs";
 import { listShapesInOrder } from "../yjs/doc";
 import { buildQuadtree } from "./quadtree";
-import { draw as drawShape } from "../shapes/registry";
+import { draw as drawShape, setSharedShapeLookup } from "../shapes/registry";
 import type { Viewport } from "./viewport";
 
 export type RendererHandle = {
@@ -48,6 +48,9 @@ export function startRenderer(opts: {
       ctx.scale(v.zoom, v.zoom);
 
       const shapes = listShapesInOrder(doc);
+      const shapesById = new Map(shapes.map((s) => [s.id, s]));
+      setSharedShapeLookup(shapesById);
+
       const qt = buildQuadtree(shapes);
       const viewRect = {
         x: -v.x / v.zoom - 100,
@@ -57,6 +60,8 @@ export function startRenderer(opts: {
       };
       const visible = qt.query(viewRect);
       for (const s of visible) drawShape(ctx, s, v);
+
+      setSharedShapeLookup(null);
       ctx.restore();
       dirty = false;
     }

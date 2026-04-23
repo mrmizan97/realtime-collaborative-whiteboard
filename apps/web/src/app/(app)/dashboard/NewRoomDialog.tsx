@@ -1,11 +1,13 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { TEMPLATES } from "@/lib/rooms/templates";
 
 export function NewRoomDialog({ variant = "default" }: { variant?: "default" | "cta" }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [template, setTemplate] = useState("blank");
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -15,7 +17,7 @@ export function NewRoomDialog({ variant = "default" }: { variant?: "default" | "
       const res = await fetch("/api/rooms", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, template }),
       });
       if (!res.ok) throw new Error("create failed");
       const { slug } = (await res.json()) as { slug: string };
@@ -39,7 +41,7 @@ export function NewRoomDialog({ variant = "default" }: { variant?: "default" | "
       </button>
       {open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <form onSubmit={submit} className="bg-white rounded-lg p-6 max-w-sm w-full space-y-4 shadow-xl">
+          <form onSubmit={submit} className="bg-white rounded-lg p-6 max-w-md w-full space-y-4 shadow-xl">
             <h2 className="text-lg font-semibold">Create a new room</h2>
             <input
               autoFocus
@@ -51,6 +53,26 @@ export function NewRoomDialog({ variant = "default" }: { variant?: "default" | "
               minLength={1}
               maxLength={120}
             />
+            <div>
+              <label className="text-sm font-medium text-neutral-700">Template</label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {TEMPLATES.map((t) => (
+                  <button
+                    type="button"
+                    key={t.id}
+                    onClick={() => setTemplate(t.id)}
+                    className={`text-left p-3 border rounded-md text-sm transition ${
+                      template === t.id
+                        ? "border-neutral-900 bg-neutral-50"
+                        : "border-neutral-200 hover:border-neutral-400"
+                    }`}
+                  >
+                    <div className="font-medium">{t.name}</div>
+                    <div className="text-xs text-neutral-500 mt-1">{t.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex justify-end gap-2">
               <button
                 type="button"

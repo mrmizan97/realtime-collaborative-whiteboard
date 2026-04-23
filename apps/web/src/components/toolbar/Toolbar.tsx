@@ -12,6 +12,9 @@ import {
   ArrowRight,
   Minus,
   StickyNote,
+  Frame,
+  Image,
+  GitBranch,
 } from "lucide-react";
 
 const TOOLS: { id: ToolName; label: string; key: string; Icon: typeof Square }[] = [
@@ -21,9 +24,12 @@ const TOOLS: { id: ToolName; label: string; key: string; Icon: typeof Square }[]
   { id: "ellipse", label: "Ellipse", key: "O", Icon: Circle },
   { id: "line", label: "Line", key: "L", Icon: Minus },
   { id: "arrow", label: "Arrow", key: "A", Icon: ArrowRight },
+  { id: "connector", label: "Connector", key: "C", Icon: GitBranch },
   { id: "pen", label: "Pen", key: "P", Icon: Pencil },
   { id: "text", label: "Text", key: "T", Icon: Type },
   { id: "sticky", label: "Sticky", key: "S", Icon: StickyNote },
+  { id: "frame", label: "Frame", key: "F", Icon: Frame },
+  { id: "image", label: "Image", key: "I", Icon: Image },
 ];
 
 export function Toolbar({ disabled }: { disabled?: boolean }) {

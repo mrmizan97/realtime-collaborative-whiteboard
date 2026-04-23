@@ -8,6 +8,8 @@ import * as line from "./line";
 import * as arrow from "./arrow";
 import * as text from "./text";
 import * as sticky from "./sticky";
+import * as frame from "./frame";
+import * as image from "./image";
 
 export type ShapeModule = {
   draw: (ctx: CanvasRenderingContext2D, s: Shape, v: Viewport) => void;
@@ -23,12 +25,25 @@ const modules: Record<ShapeType, ShapeModule> = {
   arrow: arrow,
   text: text,
   sticky: sticky,
+  frame: frame,
+  image: image,
 };
 
 for (const [k, m] of Object.entries(modules)) {
   if (typeof m.toSvg !== "function") {
     throw new Error(`Shape '${k}' missing toSvg implementation`);
   }
+}
+
+// Shared per-frame context for shape modules that need to resolve cross-shape
+// references (e.g. arrows that attach to other shapes). Set by the renderer at
+// the start of every frame and cleared after.
+let sharedShapesById: Map<string, Shape> | null = null;
+export function setSharedShapeLookup(map: Map<string, Shape> | null) {
+  sharedShapesById = map;
+}
+export function getSharedShapeLookup(): Map<string, Shape> | null {
+  return sharedShapesById;
 }
 
 export function getShapeModule(type: ShapeType): ShapeModule {

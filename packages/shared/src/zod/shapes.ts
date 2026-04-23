@@ -21,6 +21,8 @@ export const arrowShape = z.object({
   ...base,
   type: z.literal("arrow"),
   points: z.array(z.tuple([z.number(), z.number()])),
+  fromShapeId: z.string().nullable().optional(),
+  toShapeId: z.string().nullable().optional(),
 });
 export const lineShape = z.object({
   ...base,
@@ -45,6 +47,17 @@ export const stickyShape = z.object({
   text: z.string(),
   color: z.string().default("#FFF59D"),
 });
+export const frameShape = z.object({
+  ...base,
+  type: z.literal("frame"),
+  label: z.string().default("Frame"),
+});
+export const imageShape = z.object({
+  ...base,
+  type: z.literal("image"),
+  src: z.string(), // data: URL or https URL
+  alt: z.string().optional(),
+});
 
 export const shape = z.discriminatedUnion("type", [
   rectangleShape,
@@ -54,6 +67,8 @@ export const shape = z.discriminatedUnion("type", [
   penShape,
   textShape,
   stickyShape,
+  frameShape,
+  imageShape,
 ]);
 export type Shape = z.infer<typeof shape>;
 export type ShapeType = Shape["type"];

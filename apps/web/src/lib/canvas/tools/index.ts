@@ -7,7 +7,10 @@ export type ToolName =
   | "arrow"
   | "line"
   | "text"
-  | "sticky";
+  | "sticky"
+  | "frame"
+  | "image"
+  | "connector";
 
 export type ToolContext = {
   doc: import("yjs").Doc;

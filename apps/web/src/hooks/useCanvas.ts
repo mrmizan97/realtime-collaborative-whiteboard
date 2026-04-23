@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import type { WebsocketProvider } from "y-websocket";
 import { mountProviders, type ProviderStack } from "@/lib/yjs/provider";
 import { startRenderer, type RendererHandle } from "@/lib/canvas/renderer";
 import { useViewportStore } from "@/stores/viewport";
@@ -7,6 +8,7 @@ import { useToolStore } from "@/stores/tool";
 import { bindConnectionStatus } from "@/lib/offline/status";
 import { useAwarenessStore, type PeerEntry } from "@/stores/awareness";
 import { useSelectionStore } from "@/stores/selection";
+import { useFollowStore } from "@/stores/follow";
 import { makeUndoManager, LOCAL_ORIGIN } from "@/lib/yjs/undo";
 import { selectTool } from "@/lib/canvas/tools/select";
 import { rectangleTool } from "@/lib/canvas/tools/rectangle";
@@ -17,11 +19,15 @@ import { lineTool } from "@/lib/canvas/tools/line";
 import { arrowTool } from "@/lib/canvas/tools/arrow";
 import { textTool } from "@/lib/canvas/tools/text";
 import { stickyTool } from "@/lib/canvas/tools/sticky";
+import { frameTool } from "@/lib/canvas/tools/frame";
+import { imageTool } from "@/lib/canvas/tools/image";
+import { connectorTool } from "@/lib/canvas/tools/connector";
 import { screenToWorld, zoomAt } from "@/lib/canvas/viewport";
 import { CursorThrottle, patchLocalAwareness, initLocalAwareness } from "@/lib/yjs/awareness";
 import { colorForUser } from "@/lib/yjs/colors";
 import { useUser } from "@/stores/user";
 import { deleteMany } from "@/lib/yjs/doc";
+import { useDocStore } from "@/stores/doc";
 import type { Tool } from "@/lib/canvas/tools";
 import type { AwarenessState } from "@canvasly/shared";
 
@@ -35,6 +41,9 @@ const TOOLS: Record<string, Tool> = {
   arrow: arrowTool,
   text: textTool,
   sticky: stickyTool,
+  frame: frameTool,
+  image: imageTool,
+  connector: connectorTool,
 };
 
 export function useCanvas(slug: string) {
@@ -43,6 +52,7 @@ export function useCanvas(slug: string) {
   const rendererRef = useRef<RendererHandle | null>(null);
   const undoRef = useRef<ReturnType<typeof makeUndoManager> | null>(null);
   const docRef = useRef<import("yjs").Doc | null>(null);
+  const wsRef = useRef<WebsocketProvider | null>(null);
 
   useEffect(() => {
     let destroyed = false;
@@ -58,7 +68,9 @@ export function useCanvas(slug: string) {
       }
       providersRef.current = providers;
       docRef.current = providers.doc;
+      wsRef.current = providers.ws;
       undoRef.current = makeUndoManager(providers.doc);
+      useDocStore.getState().set(providers.doc, providers.ws);
 
       const user = useUser.getState().user;
       if (user) {
@@ -72,6 +84,7 @@ export function useCanvas(slug: string) {
           cursor: null,
           selection: [],
           viewing: true,
+          viewport: useViewportStore.getState().viewport,
         });
       }
 
@@ -100,12 +113,26 @@ export function useCanvas(slug: string) {
           map.set(clientId, { ...(v as AwarenessState), clientId });
         });
         useAwarenessStore.getState().setAll(map);
+
+        const followingId = useFollowStore.getState().followingClientId;
+        if (followingId != null) {
+          const peer = map.get(followingId);
+          if (peer?.viewport) useViewportStore.getState().setViewport(peer.viewport);
+        }
       };
       providers.ws.awareness.on("change", syncAwareness);
       syncAwareness();
 
       const unsubSel = useSelectionStore.subscribe((state) => {
         patchLocalAwareness(providers.ws, { selection: state.ids });
+      });
+
+      let vpThrottle = 0;
+      const unsubVpShare = useViewportStore.subscribe((state) => {
+        const now = Date.now();
+        if (now - vpThrottle < 80) return;
+        vpThrottle = now;
+        patchLocalAwareness(providers.ws, { viewport: state.viewport });
       });
 
       const onVisibility = () =>
@@ -125,6 +152,9 @@ export function useCanvas(slug: string) {
         const rect = canvas.getBoundingClientRect();
         const v = useViewportStore.getState().viewport;
         const world = screenToWorld(v, e.clientX - rect.left, e.clientY - rect.top);
+        if (useFollowStore.getState().followingClientId != null) {
+          useFollowStore.getState().follow(null);
+        }
         TOOLS[useToolStore.getState().active]?.onPointerDown(makeCtx(), world, e);
       };
       const handlePointerMove = (e: PointerEvent) => {
@@ -168,6 +198,10 @@ export function useCanvas(slug: string) {
           }
           return;
         }
+        if (e.key === "Escape") {
+          useFollowStore.getState().follow(null);
+          useSelectionStore.getState().clear();
+        }
         const map: Record<string, string> = {
           v: "select",
           h: "pan",
@@ -178,6 +212,9 @@ export function useCanvas(slug: string) {
           a: "arrow",
           l: "line",
           s: "sticky",
+          f: "frame",
+          i: "image",
+          c: "connector",
         };
         const tool = map[e.key.toLowerCase()];
         if (tool) useToolStore.getState().setTool(tool as never);
@@ -202,9 +239,11 @@ export function useCanvas(slug: string) {
         providers.ws.awareness.off("change", syncAwareness);
         unbindStatus();
         unsubVp();
+        unsubVpShare();
         unsubSel();
         renderer.stop();
         undoRef.current?.destroy();
+        useDocStore.getState().set(null, null);
         providers.destroy();
       };
     })();
@@ -218,6 +257,7 @@ export function useCanvas(slug: string) {
   return {
     canvasRef,
     docRef,
+    wsRef,
     undo: () => undoRef.current?.undo(),
     redo: () => undoRef.current?.redo(),
   };
