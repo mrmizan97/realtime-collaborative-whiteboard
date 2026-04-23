@@ -1,5 +1,7 @@
 import type { Tool } from "./index";
-import { addShape, updateShape } from "../../yjs/doc";
+import { addShape, deleteShape, getShape, updateShape } from "../../yjs/doc";
+
+const MIN_LENGTH = 4;
 
 let drawingId: string | null = null;
 let originX = 0;
@@ -50,7 +52,12 @@ export const lineTool: Tool = {
       ctx.origin,
     );
   },
-  onPointerUp() {
+  onPointerUp(ctx) {
+    if (!drawingId) return;
+    const s = getShape(ctx.doc, drawingId);
+    if (s && Math.hypot(s.width, s.height) < MIN_LENGTH) {
+      deleteShape(ctx.doc, drawingId, ctx.origin);
+    }
     drawingId = null;
   },
 };

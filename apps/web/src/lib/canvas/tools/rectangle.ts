@@ -1,5 +1,7 @@
 import type { Tool, ToolContext } from "./index";
-import { addShape, updateShape } from "../../yjs/doc";
+import { addShape, deleteShape, getShape, updateShape } from "../../yjs/doc";
+
+const MIN_SIZE = 3;
 
 let drawingId: string | null = null;
 let startX = 0;
@@ -44,7 +46,12 @@ export const rectangleTool: Tool = {
       ctx.origin,
     );
   },
-  onPointerUp() {
+  onPointerUp(ctx) {
+    if (!drawingId) return;
+    const s = getShape(ctx.doc, drawingId);
+    if (s && (s.width < MIN_SIZE || s.height < MIN_SIZE)) {
+      deleteShape(ctx.doc, drawingId, ctx.origin);
+    }
     drawingId = null;
   },
 };

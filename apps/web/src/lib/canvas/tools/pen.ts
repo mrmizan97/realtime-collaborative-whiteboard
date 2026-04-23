@@ -1,5 +1,7 @@
 import type { Tool } from "./index";
-import { addShape, updateShape } from "../../yjs/doc";
+import { addShape, deleteShape, updateShape } from "../../yjs/doc";
+
+const MIN_POINTS = 2;
 
 let drawingId: string | null = null;
 let originX = 0;
@@ -49,7 +51,10 @@ export const penTool: Tool = {
       ctx.origin,
     );
   },
-  onPointerUp() {
+  onPointerUp(ctx) {
+    if (drawingId && points.length < MIN_POINTS) {
+      deleteShape(ctx.doc, drawingId, ctx.origin);
+    }
     drawingId = null;
     points = [];
   },
