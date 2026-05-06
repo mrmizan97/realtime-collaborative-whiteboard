@@ -18,7 +18,9 @@ export async function resolveRoomAccess(slug: string, userId: string) {
   if (room.ownerId === userId) return { room, role: "owner" as const };
   const role = await getMembership(room.id, userId);
   if (role) return { room, role };
-  if (room.visibility === "public") return { room, role: "viewer" as const };
+  if (room.visibility === "public" || room.visibility === "unlisted") {
+    return { room, role: "viewer" as const };
+  }
   return null;
 }
 

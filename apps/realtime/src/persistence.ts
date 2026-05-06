@@ -1,5 +1,5 @@
 import { createDb, snapshots, updateLog } from "@canvasly/shared";
-import { eq, desc, lt } from "drizzle-orm";
+import { and, eq, desc, lt } from "drizzle-orm";
 import { logger } from "./logger.js";
 import { metrics } from "./metrics.js";
 
@@ -48,6 +48,5 @@ export async function gcOldUpdates(roomId: string, before: Date): Promise<void> 
   if (!db) return;
   await db
     .delete(updateLog)
-    .where(eq(updateLog.roomId, roomId))
-    .where(lt(updateLog.createdAt, before));
+    .where(and(eq(updateLog.roomId, roomId), lt(updateLog.createdAt, before)));
 }
