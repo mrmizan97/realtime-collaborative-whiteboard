@@ -17,11 +17,14 @@ type SeedUser = {
   isAdmin?: boolean;
 };
 
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? "admin123";
+const USER_PASSWORD = process.env.SEED_USER_PASSWORD ?? "user123";
+
 const SEED_USERS: SeedUser[] = [
-  { email: "admin@canvasly.dev", name: "Admin User", password: "admin123", isAdmin: true },
-  { email: "alice@canvasly.dev", name: "Alice", password: "user123" },
-  { email: "bob@canvasly.dev", name: "Bob", password: "user123" },
-  { email: "carol@canvasly.dev", name: "Carol", password: "user123" },
+  { email: "admin@canvasly.dev", name: "Admin User", password: ADMIN_PASSWORD, isAdmin: true },
+  { email: "alice@canvasly.dev", name: "Alice", password: USER_PASSWORD },
+  { email: "bob@canvasly.dev", name: "Bob", password: USER_PASSWORD },
+  { email: "carol@canvasly.dev", name: "Carol", password: USER_PASSWORD },
 ];
 
 type SeedRoom = {
@@ -205,10 +208,10 @@ async function main() {
 
   console.log("\n✓ Seed complete.\n");
   console.log("Dummy credentials (email / password):");
-  console.log("  admin@canvasly.dev / admin123    [admin]");
-  console.log("  alice@canvasly.dev / user123");
-  console.log("  bob@canvasly.dev   / user123");
-  console.log("  carol@canvasly.dev / user123");
+  for (const u of SEED_USERS) {
+    const tag = u.isAdmin ? "[admin]" : "       ";
+    console.log(`  ${u.email.padEnd(20)} / ${u.password}    ${tag}`);
+  }
 
   process.exit(0);
 }
