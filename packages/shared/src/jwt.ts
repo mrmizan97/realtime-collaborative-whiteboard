@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import type { RealtimeJwtClaims } from "./types/index";
+import type { RealtimeJwtClaims } from "./types/index.js";
 
 const ISSUER = "canvasly";
 const AUDIENCE = "canvasly-realtime";

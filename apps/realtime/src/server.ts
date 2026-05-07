@@ -6,7 +6,7 @@ import { AwarenessRateLimiter } from "./awareness.js";
 import { logger } from "./logger.js";
 import { metrics } from "./metrics.js";
 
-const PORT = Number(process.env.REALTIME_PORT ?? 4000);
+const PORT = Number(process.env.REALTIME_PORT ?? process.env.PORT ?? 4000);
 const rooms = new Map<string, Room>();
 
 async function getOrCreateRoom(roomId: string): Promise<Room> {

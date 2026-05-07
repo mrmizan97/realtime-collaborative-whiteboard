@@ -105,3 +105,4 @@ temp/
 .claude/
 .cursor/
 .zed/
+.deploy-secrets.local.txt

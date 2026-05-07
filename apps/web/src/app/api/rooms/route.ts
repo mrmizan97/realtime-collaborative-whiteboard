@@ -55,6 +55,7 @@ export async function POST(req: Request) {
       .insert(rooms)
       .values({ slug, name: parsed.data.name, ownerId: session.user.id })
       .returning();
+    if (!row) return NextResponse.json({ error: "insert failed" }, { status: 500 });
     await db.insert(roomMembers).values({
       roomId: row.id,
       userId: session.user.id,

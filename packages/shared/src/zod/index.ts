@@ -1,2 +1,2 @@
-export * from "./rooms";
-export * from "./shapes";
+export * from "./rooms.js";
+export * from "./shapes.js";

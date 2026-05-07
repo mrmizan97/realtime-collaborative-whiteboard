@@ -17,8 +17,9 @@ export function startRenderer(opts: {
   getSize: () => { width: number; height: number; dpr: number };
 }): RendererHandle {
   const { canvas, doc, getViewport, getSize } = opts;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("2D context unavailable");
+  const maybeCtx = canvas.getContext("2d");
+  if (!maybeCtx) throw new Error("2D context unavailable");
+  const ctx: CanvasRenderingContext2D = maybeCtx;
 
   let dirty = true;
   let raf = 0;
