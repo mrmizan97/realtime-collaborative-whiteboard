@@ -67,6 +67,7 @@ http.on("upgrade", async (req, socket, head) => {
         userId: claims.sub,
         role: claims.role,
         clientId: Math.floor(Math.random() * 2 ** 31),
+        controlledIds: new Set<number>(),
         limiter: new AwarenessRateLimiter(),
       };
       room.addConnection(conn);

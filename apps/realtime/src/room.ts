@@ -25,6 +25,7 @@ export type Connection = {
   userId: string;
   role: Role;
   clientId: number;
+  controlledIds: Set<number>;
   limiter: AwarenessRateLimiter;
 };
 
@@ -62,7 +63,13 @@ export class Room {
 
   removeConnection(conn: Connection) {
     this.connections.delete(conn);
-    awarenessProtocol.removeAwarenessStates(this.awareness, [conn.clientId], "disconnect");
+    if (conn.controlledIds.size > 0) {
+      awarenessProtocol.removeAwarenessStates(
+        this.awareness,
+        Array.from(conn.controlledIds),
+        "disconnect",
+      );
+    }
     metrics.decConnections();
     if (this.connections.size === 0) this.scheduleFlushAndGc();
   }
@@ -76,8 +83,14 @@ export class Room {
       if (conn.role === "viewer") {
         const peek = decoding.clone(decoder);
         const syncKind = decoding.readVarUint(peek);
-        if (syncKind === syncProtocol.messageYjsUpdate) {
-          conn.ws.close(1008, "viewer cannot write");
+        if (
+          syncKind === syncProtocol.messageYjsSyncStep2 ||
+          syncKind === syncProtocol.messageYjsUpdate
+        ) {
+          logger.warn(
+            { roomId: this.id, userId: conn.userId, syncKind },
+            "viewer write rejected",
+          );
           return;
         }
       }
@@ -120,6 +133,12 @@ export class Room {
     { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
     origin: unknown,
   ) => {
+    if (origin && typeof origin === "object" && "controlledIds" in origin) {
+      const conn = origin as Connection;
+      for (const id of added) conn.controlledIds.add(id);
+      for (const id of updated) conn.controlledIds.add(id);
+      for (const id of removed) conn.controlledIds.delete(id);
+    }
     const changed = added.concat(updated, removed);
     const update = awarenessProtocol.encodeAwarenessUpdate(this.awareness, changed);
     const enc = encoding.createEncoder();
