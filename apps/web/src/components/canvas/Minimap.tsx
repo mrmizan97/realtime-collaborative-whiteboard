@@ -4,17 +4,18 @@ import type * as Y from "yjs";
 import type { Shape } from "@canvasly/shared";
 import { listShapesInOrder } from "@/lib/yjs/doc";
 import { useViewportStore } from "@/stores/viewport";
+import { useDocStore } from "@/stores/doc";
 
 const W = 180;
 const H = 130;
 
-export function Minimap({ docRef }: { docRef: React.MutableRefObject<Y.Doc | null> }) {
+export function Minimap({ docRef: _docRef }: { docRef: React.MutableRefObject<Y.Doc | null> }) {
   const viewport = useViewportStore((s) => s.viewport);
   const setViewport = useViewportStore((s) => s.setViewport);
+  const doc = useDocStore((s) => s.doc);
   const [shapes, setShapes] = useState<Shape[]>([]);
 
   useEffect(() => {
-    const doc = docRef.current;
     if (!doc) return;
     let raf = 0;
     const read = () => {
@@ -27,7 +28,7 @@ export function Minimap({ docRef }: { docRef: React.MutableRefObject<Y.Doc | nul
       doc.off("update", read);
       cancelAnimationFrame(raf);
     };
-  }, [docRef]);
+  }, [doc]);
 
   if (shapes.length === 0) return null;
 
