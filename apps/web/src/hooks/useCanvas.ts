@@ -26,7 +26,7 @@ import { screenToWorld, zoomAt } from "@/lib/canvas/viewport";
 import { CursorThrottle, patchLocalAwareness, initLocalAwareness } from "@/lib/yjs/awareness";
 import { colorForUser } from "@/lib/yjs/colors";
 import { useUser } from "@/stores/user";
-import { deleteMany } from "@/lib/yjs/doc";
+import { addShape, deleteMany } from "@/lib/yjs/doc";
 import { useDocStore } from "@/stores/doc";
 import type { Tool } from "@/lib/canvas/tools";
 import type { AwarenessState } from "@canvasly/shared";
@@ -71,6 +71,15 @@ export function useCanvas(slug: string) {
       wsRef.current = providers.ws;
       undoRef.current = makeUndoManager(providers.doc);
       useDocStore.getState().set(providers.doc, providers.ws);
+      if (process.env.NODE_ENV !== "production") {
+        (window as unknown as { __canvasly: unknown }).__canvasly = {
+          doc: providers.doc,
+          ws: providers.ws,
+          addShape: (shape: Parameters<typeof addShape>[1]) =>
+            addShape(providers.doc, shape, LOCAL_ORIGIN),
+          docStore: useDocStore,
+        };
+      }
 
       const user = useUser.getState().user;
       if (user) {
